@@ -232,20 +232,11 @@ class DetectionPredictor(BasePredictor):
         # Display object centers
         object_centers = defaultdict(list)
 
-        for *xyxy, conf, cls in reversed(det):
-            x_c, y_c, bbox_w, bbox_h = xyxy_to_xywh(*xyxy)
-            center = (x_c, y_c)
-            object_id = int(cls)
-
-            # Append the center coordinates to the corresponding object ID
-            object_centers[object_id].append(center)
-
-        for object_id, centers in object_centers.items():
-            print(f"Object ID: {object_id}, Centers: {centers}")
-
+        # Draw bounding boxes
         for c in det[:, 5].unique():
             n = (det[:, 5] == c).sum()  # detections per class
             log_string += f"{n} {self.model.names[int(c)]}{'s' * (n > 1)}, "
+
         # write
         gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
         xywh_bboxs = []
@@ -268,6 +259,16 @@ class DetectionPredictor(BasePredictor):
             object_id = outputs[:, -1]
 
             draw_boxes(im0, bbox_xyxy, self.model.names, object_id, identities)
+
+            # Update object centers
+            for id_, bbox in zip(identities, bbox_xyxy):
+                center_x = (bbox[0] + bbox[2]) / 2
+                center_y = (bbox[1] + bbox[3]) / 2
+                object_centers[int(id_)].append((center_x, center_y))
+
+            # Process object centers
+            for object_id, centers in object_centers.items():
+                print(f"Object ID: {object_id}, Centers: {centers}")
 
         return log_string
 

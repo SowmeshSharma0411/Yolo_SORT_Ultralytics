@@ -150,3 +150,4 @@ wandb/
 *_openvino_model/
 
 myenv/
+runs/
