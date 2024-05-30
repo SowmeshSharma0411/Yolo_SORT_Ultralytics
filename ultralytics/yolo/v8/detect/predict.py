@@ -6,22 +6,27 @@ import argparse
 import time
 import json
 import uuid
+import sys
 from pathlib import Path
 
 import cv2
 import torch
 import torch.backends.cudnn as cudnn
 from numpy import random
-from ultralytics.yolo.engine.predictor import BasePredictor
-from ultralytics.yolo.utils import DEFAULT_CONFIG, ROOT, ops
-from ultralytics.yolo.utils.checks import check_imgsz
-from ultralytics.yolo.utils.plotting import Annotator, colors, save_one_box
 
 import cv2
 from deep_sort_pytorch.utils.parser import get_config
 from deep_sort_pytorch.deep_sort import DeepSort
 from collections import deque
 import numpy as np
+
+# Add the parent directory of ultralytics to sys.path
+sys.path.append(r'C:\Users\aimlc\OneDrive\Desktop\Sowmesh\Yolo_SORT_Ultralytics')
+
+from ultralytics.yolo.engine.predictor import BasePredictor
+from ultralytics.yolo.utils import DEFAULT_CONFIG, ROOT, ops
+from ultralytics.yolo.utils.checks import check_imgsz
+from ultralytics.yolo.utils.plotting import Annotator, colors, save_one_box
 
 palette = (2 ** 11 - 1, 2 ** 15 - 1, 2 ** 20 - 1)
 data_deque = {}
