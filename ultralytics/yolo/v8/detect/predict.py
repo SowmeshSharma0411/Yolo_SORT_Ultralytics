@@ -5,6 +5,7 @@ import torch
 import argparse
 import time
 import json
+import uuid
 from pathlib import Path
 
 import cv2
@@ -24,8 +25,14 @@ import numpy as np
 
 palette = (2 ** 11 - 1, 2 ** 15 - 1, 2 ** 20 - 1)
 data_deque = {}
+trajectory_dict = {}
 
 deepsort = None
+
+
+# Function to generate a unique UUID for each trajectory
+def generate_uuid():
+    return str(uuid.uuid4())
 
 
 def init_tracker():
@@ -140,6 +147,16 @@ def draw_boxes(img, bbox, names, object_id, identities=None, offset=(0, 0)):
     # remove tracked point from buffer if object is lost
     for key in list(data_deque):
         if key not in identities:
+            # Generate UUID for the trajectory
+            trajectory_uuid = generate_uuid()
+
+            trajectory_dict[trajectory_uuid] = {
+                'object_id': key,
+                'centers': list(data_deque[key])
+            }
+            # # Store the trajectory points in trajectories_dict
+            # trajectory_dict[trajectory_uuid] = list(data_deque[key])
+            # Remove the object's deque from data_deque
             data_deque.pop(key)
 
     for i, box in enumerate(bbox):
@@ -229,8 +246,8 @@ class DetectionPredictor(BasePredictor):
         if len(det) == 0:
             return log_string
 
-        # Display object centers
-        object_centers = defaultdict(list)
+        # # Display object centers
+        # object_centers = defaultdict(list)
 
         # Draw bounding boxes
         for c in det[:, 5].unique():
@@ -264,11 +281,11 @@ class DetectionPredictor(BasePredictor):
             for id_, bbox in zip(identities, bbox_xyxy):
                 center_x = (bbox[0] + bbox[2]) / 2
                 center_y = (bbox[1] + bbox[3]) / 2
-                object_centers[int(id_)].append((center_x, center_y))
+                # object_centers[int(id_)].append((center_x, center_y))
 
             # Process object centers
-            for object_id, centers in object_centers.items():
-                print(f"Object ID: {object_id}, Centers: {centers}")
+            # for object_id, centers in object_centers.items():
+            #     print(f"Object ID: {object_id}, Centers: {centers}")
 
         return log_string
 
@@ -283,5 +300,30 @@ def predict(cfg):
     predictor()
 
 
+# if __name__ == "__main__":
+#     predict()
+#     for object_id, centers in object_centers.items():
+#         print(f"Object ID: {object_id}, Centers: {centers}")
 if __name__ == "__main__":
-    predict()
+    try:
+        predict()
+    except KeyboardInterrupt:
+        print("Keyboard interrupt received.")
+    finally:
+        # Transfer remaining trajectories from data_deque to trajectories_dict
+        for object_id, center_deque in data_deque.items():
+            # Generate UUID for the trajectory
+            trajectory_uuid = generate_uuid()
+            # Store the trajectory points in trajectories_dict
+            trajectory_dict[trajectory_uuid] = {
+                'object_id': object_id,
+                'centers': list(center_deque)
+            }
+
+        # Open a JSON file for writing
+        with open("object_centers.json", "w") as file:
+            # Write trajectory data to JSON
+            json.dump(trajectory_dict, file, indent=4)
+
+        print("Object centers stored in 'object_centers.json'")
+        print("Program terminated.")
