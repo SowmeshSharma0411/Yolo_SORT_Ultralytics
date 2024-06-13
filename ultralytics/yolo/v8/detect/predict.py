@@ -153,16 +153,17 @@ def draw_boxes(img, bbox, names, object_id, identities=None, offset=(0, 0)):
     for key in list(data_deque):
         if key not in identities:
             # Generate UUID for the trajectory
-            trajectory_uuid = generate_uuid()
+            trajectory_dict[key] = list(data_deque[key])
+            # trajectory_uuid = generate_uuid()
 
-            trajectory_dict[trajectory_uuid] = {
-                'object_id': key,
-                'centers': list(data_deque[key])
-            }
+            # trajectory_dict[trajectory_uuid] = {
+            #     'object_id': key,
+            #     'centers': list(data_deque[key])
+            # }
             # # Store the trajectory points in trajectories_dict
             # trajectory_dict[trajectory_uuid] = list(data_deque[key])
             # Remove the object's deque from data_deque
-            data_deque.pop(key)
+            # data_deque.pop(key)
 
     for i, box in enumerate(bbox):
         x1, y1, x2, y2 = [int(i) for i in box]
@@ -188,15 +189,15 @@ def draw_boxes(img, bbox, names, object_id, identities=None, offset=(0, 0)):
         data_deque[id].appendleft(center)
         UI_box(box, img, label=label, color=color, line_thickness=2)
         # draw trail
-        for i in range(1, len(data_deque[id])):
-            # check if on buffer value is none
-            if data_deque[id][i - 1] is None or data_deque[id][i] is None:
-                continue
-            # generate dynamic thickness of trails
-            thickness = int(np.sqrt(64 / float(i + i)) * 1.5)
-            # draw trails
-            cv2.line(img, data_deque[id][i - 1],
-                     data_deque[id][i], color, thickness)
+        # for i in range(1, len(data_deque[id])):
+        #     # check if on buffer value is none
+        #     if data_deque[id][i - 1] is None or data_deque[id][i] is None:
+        #         continue
+        #     # generate dynamic thickness of trails
+        #     thickness = int(np.sqrt(64 / float(i + i)) * 1.5)
+        #     # draw trails
+        #     cv2.line(img, data_deque[id][i - 1],
+        #              data_deque[id][i], color, thickness)
     return img
 
 
@@ -316,19 +317,24 @@ if __name__ == "__main__":
         print("Keyboard interrupt received.")
     finally:
         # Transfer remaining trajectories from data_deque to trajectories_dict
+        f=open("object_centers.txt", "w")
         for object_id, center_deque in data_deque.items():
             # Generate UUID for the trajectory
-            trajectory_uuid = generate_uuid()
-            # Store the trajectory points in trajectories_dict
-            trajectory_dict[trajectory_uuid] = {
-                'object_id': object_id,
-                'centers': list(center_deque)
-            }
+            # trajectory_uuid = generate_uuid()
+            trajectory_dict[object_id] = list(center_deque)
+            # # Store the trajectory points in trajectories_dict
+            # trajectory_dict[trajectory_uuid] = {
+            #     'object_id': object_id,
+            #     'centers': list(center_deque)
+            # }
+            # f.write(f"Object ID: {object_id}, Centers: {list(center_deque)}\n")
 
+        for object_id, centers in trajectory_dict.items():
+            f.write(f"Object ID: {object_id}, Centers: {centers}\n")
         # Open a JSON file for writing
-        with open("object_centers.json", "w") as file:
-            # Write trajectory data to JSON
-            json.dump(trajectory_dict, file, indent=4)
+        # with open("object_centers.json", "w") as file:
+        #     # Write trajectory data to JSON
+        #     json.dump(trajectory_dict, file, indent=4)
 
-        print("Object centers stored in 'object_centers.json'")
+        print("Object centers stored in 'object_centers.txt'")
         print("Program terminated.")
