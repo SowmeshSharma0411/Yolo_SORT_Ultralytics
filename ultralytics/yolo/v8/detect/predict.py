@@ -173,7 +173,7 @@ def draw_boxes(img, bbox, names, object_id, identities=None, offset=(0, 0)):
         y2 += offset[1]
 
         # code to find center of bottom edge
-        center = (int((x2+x1) / 2), int((y2+y2)/2))
+        center = (int((x2+x1) / 2), int((y2+y1)/2))
 
         # get ID of object
         id = int(identities[i]) if identities is not None else 0
@@ -251,10 +251,7 @@ class DetectionPredictor(BasePredictor):
         all_outputs.append(det)
         if len(det) == 0:
             return log_string
-
-        # # Display object centers
-        # object_centers = defaultdict(list)
-
+        
         # Draw bounding boxes
         for c in det[:, 5].unique():
             n = (det[:, 5] == c).sum()  # detections per class
@@ -283,33 +280,19 @@ class DetectionPredictor(BasePredictor):
 
             draw_boxes(im0, bbox_xyxy, self.model.names, object_id, identities)
 
-            # Update object centers
-            for id_, bbox in zip(identities, bbox_xyxy):
-                center_x = (bbox[0] + bbox[2]) / 2
-                center_y = (bbox[1] + bbox[3]) / 2
-                # object_centers[int(id_)].append((center_x, center_y))
-
-            # Process object centers
-            # for object_id, centers in object_centers.items():
-            #     print(f"Object ID: {object_id}, Centers: {centers}")
-
         return log_string
 
 
 @hydra.main(version_base=None, config_path=str(DEFAULT_CONFIG.parent), config_name=DEFAULT_CONFIG.name)
 def predict(cfg):
     init_tracker()
-    cfg.model = cfg.model or "yolov8n.pt"
+    cfg.model = cfg.model or "yolov8x.pt"
     cfg.imgsz = check_imgsz(cfg.imgsz, min_dim=2)  # check image size
     cfg.source = cfg.source if cfg.source is not None else ROOT / "assets"
     predictor = DetectionPredictor(cfg)
     predictor()
 
 
-# if __name__ == "__main__":
-#     predict()
-#     for object_id, centers in object_centers.items():
-#         print(f"Object ID: {object_id}, Centers: {centers}")
 if __name__ == "__main__":
     try:
         predict()
